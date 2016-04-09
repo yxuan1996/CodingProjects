@@ -1,0 +1,87 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script>
+  
+  var log = makeLog();
+  
+  //write messages to the log
+ 
+  //logMessage( 'Hello, JavaScript functions!' , log);
+ 
+  //logMessage( 'My name is Chris.' , log);
+ 
+  //logMessage( 'I like popcorn.' , log);
+  
+  logMessage(hello( 'President Obama' ), log);
+ 
+  logMessage(hello( 'Mom' ), log);
+ 
+  logMessage(hello( 'Your Name' ), log);
+  
+  //recursive function
+ 
+  function hello(name) {
+ 
+  var ret = 'Hello, ' + name + '! ' + 'You look very pretty today :)' ;
+ 
+  if (!name.match(/again/)) {
+ 
+  ret = ret + ' /// ' + hello(name + ' (again)' ); 
+ 
+  }
+ 
+ return ret;
+ 
+}
+  
+  //create space for the browser to log messages
+  function makeLog() {
+ 
+  var holder = document.createElement( 'div' );
+ 
+  holder.style.height = '75px' ;
+ 
+  holder.style.width = '450px' ;
+ 
+  holder.style.overflow = 'auto' ;
+ 
+  holder.style.border = '1px solid #666' ;
+ 
+  holder.style.backgroundColor = '#ccc' ;
+ 
+  holder.style.padding = '8px' ;
+ 
+  holder.style.position = 'absolute' ;
+ 
+  holder.style.bottom = '10px' ;
+ 
+  holder.style.right = '20px' ;
+ 
+  document.body.appendChild(holder);
+ 
+
+ 
+  return holder;
+ 
+  }
+ 
+
+ 
+  function logMessage(message, log) {
+    
+  //create a holder for the message
+ 
+  var holder = document.createElement( 'div' );
+  
+  //adding message to the holder
+ 
+  holder.textContent = message;
+  
+  //adding the message holder (and the message it contains) to the log
+ 
+  log.appendChild(holder);
+ 
+  }
+  
+</script>

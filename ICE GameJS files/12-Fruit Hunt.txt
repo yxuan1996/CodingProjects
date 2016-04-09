@@ -1,0 +1,597 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src= "http://gamingJS.com/Tween.js" > </script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script src= "http://gamingJS.com/Scoreboard.js" > </script> 
+<script src= "http://gamingJS.com/Sounds.js" > </script>
+<script>
+  // This is where stuff in our game will happen:
+  var scene = new THREE.Scene();
+
+  // This is what sees the stuff:
+  var aspect_ratio = window.innerWidth / window.innerHeight;
+  var camera = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 10000);
+  camera.position.z = 500;
+  //remove camera here and add it to the avatar so that it follows the avatar
+
+  // This will draw what the camera sees onto the screen:
+  var renderer = new THREE.CanvasRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // ******** START CODING ON THE NEXT LINE ********
+  //add a new scoreboard to keep track of scores
+  var scoreboard = new Scoreboard();
+ 
+  scoreboard.countdown(45);
+ 
+  scoreboard.score();
+ 
+  scoreboard.help(
+ 
+  'Arrow keys to move. ' +
+ 
+  'Space bar to jump for fruit. ' +
+ 
+  'Watch for shaking trees with fruit.' +
+ 
+  'Get near the tree and jump before the fruit is gone! ' +
+  
+  'If you want to get a lot of points just go near a tree and spam the spacebar!'
+ 
+  );
+  
+  //What happens when Game Over!
+  
+  var game_over = false;
+ 
+  scoreboard.onTimeExpired( function () {
+ 
+  scoreboard.message( "Game Over!" );
+ 
+  game_over = true;
+ 
+  });
+  
+  
+  //Collision avoidance with the trees
+  //Create areas of circle surrounding the trees that the avatar is not allowed in
+  var not_allowed = [];
+  
+  //create an invisible marker as a reference point for the camera
+  var marker = new THREE.Object3D();
+ 
+  scene.add(marker);
+
+  //making an avatar using shapes 
+ var cover = new THREE.MeshNormalMaterial();
+ 
+  var body = new THREE.SphereGeometry(100);
+ 
+  var avatar = new THREE.Mesh(body, cover);
+ 
+ //add avatar to the fixed marker instead of the scene
+  marker.add(avatar);
+
+  var hand = new THREE.SphereGeometry(50);
+ 
+  var right_hand = new THREE.Mesh(hand, cover);
+ 
+  right_hand.position.set(-150, 0, 0);
+  
+  //group all body parts together and spin the group
+  //use avatar.add instead of scene.add
+ 
+  avatar.add(right_hand);
+  
+  var left_hand = new THREE.Mesh(hand, cover);
+ 
+  left_hand.position.set(150, 0, 0);
+ 
+  avatar.add(left_hand);
+  
+  var foot = new THREE.SphereGeometry(50);
+ 
+  var right_foot = new THREE.Mesh(foot, cover);
+ 
+  right_foot.position.set(-75, -125, 0);
+ 
+  avatar.add(right_foot);
+ 
+  var left_foot = new THREE.Mesh(foot, cover);
+ 
+  left_foot.position.set(75, -125, 0);
+ 
+  avatar.add(left_foot);
+  
+  var head = new THREE.SphereGeometry(60);
+  
+  var header = new THREE.Mesh(head, cover);
+  
+  header.position.set(0,140,0);
+  
+  avatar.add(header);
+  
+  //add the camera here so that it follows the avatar
+  //avatar.add(camera);
+  
+  //add the camera to the invisible marker
+  marker.add(camera);
+  
+  //making trees
+  var tree_with_treasure;
+ 
+  var trees = [];
+ 
+  trees.push(makeTreeAt( 500, 0));
+ 
+  trees.push(makeTreeAt(-500, 0));
+ 
+  trees.push(makeTreeAt( 750, -1000));
+ 
+  trees.push(makeTreeAt(-750, -1000));
+ 
+
+ 
+  function makeTreeAt(x, z) {
+ 
+   var trunk = new THREE.Mesh(
+ 
+   new THREE.CylinderGeometry(50, 50, 200),
+   
+   //Use 0x instead of # for colour
+   new THREE.MeshBasicMaterial({color: 0xA0522D})
+ 
+  );
+ 
+
+ 
+  var top = new THREE.Mesh(
+ 
+    new THREE.SphereGeometry(150),
+    
+    //Use 0x instead of # for colour
+    new THREE.MeshBasicMaterial({color: 0x228B22})
+ 
+  );
+ 
+  top.position.y = 175;
+ 
+  trunk.add(top);
+ 
+ //add an area of circle around each tree as a restricted area for the avatar
+ //The avatar cannot enter the area
+  var boundary = new THREE.Mesh(
+ 
+  new THREE.CircleGeometry(300),
+ 
+  new THREE.MeshNormalMaterial()
+ 
+  );
+ 
+  boundary.position.y = -100;
+ 
+  boundary.rotation.x = -Math.PI/2;
+ 
+  trunk.add(boundary);
+  
+  //push the boundary area into the list of restricted areas that we made on the first line after 'start coding'
+  not_allowed.push(boundary);
+  
+  //set the position of the trunk a bit lower, so that the trees do not look as if they are flying
+  trunk.position.set(x, -75, z);
+ 
+  scene.add(trunk);
+  
+  return top;
+ 
+  }
+  
+  //shake a treetop that has treasure
+  function shakeTree() {
+  
+  //the treee with treasure is determined randomly
+  tree_with_treasure = Math.floor(Math.random() * trees.length);
+ 
+
+   //shaking animation
+   new TWEEN
+  //make the treetops wiggle
+  .Tween({x: 0})
+ 
+  .to({x: 2*Math.PI}, 200)
+ 
+  .repeat(20)
+ 
+  .onUpdate( function () {
+ 
+  trees[tree_with_treasure].position.x = 75 * Math.sin(this.x);
+ 
+  })
+ 
+  .start();
+ 
+
+  //shake a new tree after 12 seconds has passed
+  setTimeout(shakeTree, 12*1000);
+ 
+  }
+ 
+
+ 
+  shakeTree();
+
+  // Now, animate what the camera sees on the screen:
+  //animate the scene instead of showing the scene just one time
+  //use true and false to control whether the avatar animates
+  //create a clock to keep track of how much time has passed
+  var clock = new THREE.Clock(true);
+  function animate() {
+ 
+  requestAnimationFrame(animate);
+  
+  TWEEN.update();
+  
+  walk();
+  turn();
+  acrobatics();
+ 
+  renderer.render(scene, camera);
+ 
+  }
+ 
+  animate();
+ 
+  var is_cartwheeling = false;
+ 
+  var is_flipping = false;
+ 
+  function acrobatics() {
+ 
+  if (is_cartwheeling) {
+ 
+  avatar.rotation.z = avatar.rotation.z + 0.05;
+ 
+  }
+ 
+  if (is_flipping) {
+ 
+  avatar.rotation.x = avatar.rotation.x + 0.05;
+ 
+  }
+ 
+  }
+  
+  //the back and forth motion of the legs and the hands follow a sinusodial function
+  
+  function walk() {
+    
+  //If the avatar is not running, do not run this function
+    
+  if (!isWalking()) return ;
+ 
+  var position = Math.sin(clock.getElapsedTime()*5) * 50;
+  
+  //alternate left and right leg position. Also alternate left and right hand position
+ 
+  right_hand.position.z = position;
+ 
+  left_hand.position.z = -position;
+ 
+  right_foot.position.z = -position;
+ 
+  left_foot.position.z = position;
+ 
+  }
+  
+  //make the avatar turn to the direction of movement when walking
+  
+  function turn() {
+ 
+   var direction = 0;
+ 
+   if (is_moving_forward) direction = Math.PI;
+ 
+   if (is_moving_back) direction = 0;
+ 
+   if (is_moving_right) direction = Math.PI/2;
+ 
+   if (is_moving_left) direction = -Math.PI/2;
+ 
+   //we want to spin the avatar slowly to show the animation movement instead of turning straight away
+   //avatar.rotation.y = direction;
+   spinAvatar(direction);
+ 
+  }
+  
+  //spinAvatar function, used to animate the turn of the avatar by tweening
+  
+  function spinAvatar(direction) {
+    
+  //chaining method. A dot indicates that it is a long chain of code (continuous). 
+  //We could have written the code in a single line, chaining allows us to separate it into different lines for easier reading
+ 
+  new TWEEN.
+  //start from initial position
+  Tween({y: avatar.rotation.y}).
+ 
+  //move to the final y direction in 200 milliseconds
+  to({y: direction}, 200).
+ 
+  onUpdate( function () {
+ 
+  avatar.rotation.y = this.y;
+ 
+  }).
+ 
+  start();
+ 
+  }
+  
+  //make walking movements only when arrow keys are pressed
+  
+  var is_moving_right, is_moving_left, is_moving_forward, is_moving_back;
+ 
+  function isWalking() {
+ 
+  if (is_moving_right) return true;
+ 
+  if (is_moving_left) return true;
+ 
+  if (is_moving_forward) return true;
+ 
+  if (is_moving_back) return true;
+ 
+  else return false;
+ 
+  }
+
+// Event listener
+document.addEventListener( 'keydown' , function (event) {
+
+//Display the keycode of a particular key when it is pressed
+//alert(event.keyCode);
+
+//move the avatar when arrow keys are pressed
+//map the arrow keys to the appropriate keycode
+//using marker method, change position of reference market instead of avatar
+//we need to return true for is_moving values to make sure our avatar animates when it is moving
+var code = event.keyCode;
+ 
+ if (code == 37) { 
+ 
+ marker.position.x = marker.position.x-10; 
+ 
+ is_moving_left = true;
+ 
+ }
+ 
+ // left 
+ 
+ if (code == 38) {
+ 
+ marker.position.z = marker.position.z-10; 
+ 
+ is_moving_forward = true;
+ 
+ }
+ 
+ // up 
+ 
+ if (code == 39) {
+ 
+ marker.position.x = marker.position.x+10; 
+ 
+ is_moving_right = true;
+ 
+ }
+ 
+ // right 
+ 
+ if (code == 40) {
+ 
+ marker.position.z = marker.position.z+10; 
+ 
+ is_moving_back = true;
+ 
+ }
+ 
+ // down
+ 
+ //using keys to toggle cartwheeling and flipping
+ //invert boolean logic state
+ if (code == 67) is_cartwheeling = !is_cartwheeling; // C 
+ 
+ if (code == 70) is_flipping = !is_flipping; // F
+ 
+ if (code == 32) jump(); // space
+ 
+ 
+ //if a collision is detected, move by the same magnitude in the opposite direction to negate overall movement
+ if (detectCollisions()) {
+ 
+ if (is_moving_left) marker.position.x = marker.position.x+10;
+ 
+ if (is_moving_right) marker.position.x = marker.position.x-10;
+ 
+ if (is_moving_forward) marker.position.z = marker.position.z+10;
+ 
+ if (is_moving_back) marker.position.z = marker.position.z-10;
+ 
+ 
+ }
+ 
+});
+
+//use keyup to stop motion animation when we are no longer moving/pressing arrow keys
+
+document.addEventListener( 'keyup' , function (event) {
+ 
+ var code = event.keyCode;
+ 
+ if (code == 37) is_moving_left = false;
+ 
+ if (code == 38) is_moving_forward = false;
+ 
+ if (code == 39) is_moving_right = false;
+ 
+ if (code == 40) is_moving_back = false;
+ 
+});
+
+//a function that detects collisions
+
+function detectCollisions() {
+  //make a vector pointing downward in the y direction 
+  var vector = new THREE.Vector3(0, -1, 0);
+ 
+  //making a ray
+  //a ray is a combination of a point (the avatar's marker position aka centre of gravity) and a vector (pointing downward)
+  var ray = new THREE.Ray(marker.position, vector);
+  
+  //check if the ray is intersecting with any of the not allowed areas
+  var intersects = ray.intersectObjects(not_allowed);
+ 
+  //if the ray does indeed intersect with the not allowed areas, return true boolean value
+  if (intersects.length > 0) return true;
+ 
+  return false;
+ 
+}
+
+function jump() {
+ 
+  checkForTreasure();
+ 
+  animateJump();
+ 
+}
+
+function checkForTreasure() {
+ //if there are no shaking trees with treasure, then the function returns immediately and does nothing
+ if (tree_with_treasure === undefined) return ;
+
+ //If there are shaking trees the the spacebar is pressed, the distance between the tree and the avatar is calculated
+ //if the proximity if close enough (less than 500) then the player scores points
+ var treasure_tree = trees[tree_with_treasure],
+ 
+ p1 = treasure_tree.parent.position,
+ 
+ p2 = marker.position;
+ 
+
+ //use pythagoras theorem to find distance from avatar to tree
+ var distance = Math.sqrt(
+ 
+ (p1.x - p2.x)*(p1.x - p2.x) +
+ 
+ (p1.z - p2.z)*(p1.z - p2.z)
+ 
+ );
+ 
+
+ 
+ if (distance < 500) {
+ 
+ scorePoints();
+ 
+ }
+ 
+}
+
+function scorePoints() {
+  //check if the time has expired
+ //players stop getting points after the time has expired
+ if (scoreboard.getTimeRemaining() === 0) return ;
+ 
+ scoreboard.addPoints(10);
+ 
+ Sounds.bubble.play();
+ 
+ animateFruit();
+}
+
+//animate the jump function when spacebar is pressed
+function animateJump() {
+ 
+ new TWEEN
+ 
+.Tween({jump: 0})
+ 
+.to({jump: Math.PI}, 500)
+ 
+.onUpdate( function () {
+ 
+marker.position.y = 200* Math.sin(this.jump);
+ 
+})
+ 
+.start();
+ 
+}
+
+//fruit animation
+var fruit;
+ 
+ function animateFruit() {
+ 
+ if (fruit) return ;
+ 
+
+ 
+fruit = new THREE.Mesh(
+ 
+ new THREE.CylinderGeometry(25, 25, 5, 25),
+ 
+ new THREE.MeshBasicMaterial({color: 0xFFD700})
+ 
+);
+ 
+fruit.rotation.x = Math.PI/2;
+ 
+
+ 
+marker.add(fruit);
+ 
+
+ 
+ new TWEEN.
+ 
+Tween({
+ 
+height: 150,
+ 
+spin: 0
+ 
+}).
+ 
+to({
+ 
+height: 250,
+ 
+spin: 4
+ 
+}, 500).
+
+onUpdate( function () {
+ 
+fruit.position.y = this.height;
+ 
+fruit.rotation.z = this.spin;
+ 
+}).
+ 
+onComplete( function () {
+ 
+marker.remove(fruit);
+ 
+fruit = undefined;
+ 
+}).
+ 
+start();
+ 
+}
+ 
+ 
+</script>

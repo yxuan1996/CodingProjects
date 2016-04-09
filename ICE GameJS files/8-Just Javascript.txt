@@ -1,0 +1,55 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script>
+  // This is where stuff in our game will happen:
+  var scene = new THREE.Scene();
+
+  // This is what sees the stuff:
+  var aspect_ratio = window.innerWidth / window.innerHeight;
+  var camera = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 10000);
+  camera.position.z = 500;
+  scene.add(camera);
+
+  // This will draw what the camera sees onto the screen:
+  var renderer = new THREE.CanvasRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // ******** START CODING ON THE NEXT LINE ********
+var i = 0;
+ 
+ while (i < 5) {
+ 
+console.log( "i is now: " + i);
+ 
+i = i + 1;
+ 
+}
+
+var amazing_movies = [
+ 
+ 'Star Wars' ,
+ 
+ 'The Empire Strikes Back' ,
+ 
+ 'Indiana Jones and the Raiders of the Lost Ark' 
+ 
+];
+ 
+//loop through each element in the list
+ 
+amazing_movies.forEach( function (movie) {
+ 
+console.log( "GREAT: " + movie);
+ 
+});
+
+//alert box pop up
+alert( 'Stop what you are doing and shout "Yay!"' );
+
+
+
+  // Now, show what the camera sees on the screen:
+  renderer.render(scene, camera);
+</script>

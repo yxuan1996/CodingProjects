@@ -1,0 +1,94 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script>
+  // This is where stuff in our game will happen:
+  var scene = new THREE.Scene();
+
+  // This is what sees the stuff:
+  var aspect_ratio = window.innerWidth / window.innerHeight;
+  var camera = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 10000);
+  camera.position.z = 500;
+  scene.add(camera);
+
+  // This will draw what the camera sees onto the screen:
+  var renderer = new THREE.CanvasRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // ******** START CODING ON THE NEXT LINE ********
+  //making an avatar using shapes 
+ var cover = new THREE.MeshNormalMaterial();
+ 
+  var body = new THREE.SphereGeometry(100);
+ 
+  var avatar = new THREE.Mesh(body, cover);
+ 
+  scene.add(avatar);
+
+  var hand = new THREE.SphereGeometry(50);
+ 
+  var right_hand = new THREE.Mesh(hand, cover);
+ 
+  right_hand.position.set(-150, 0, 0);
+  
+  //group all body parts together and spin the group
+  //use avatar.add instead of scene.add
+ 
+  avatar.add(right_hand);
+  
+  var left_hand = new THREE.Mesh(hand, cover);
+ 
+  left_hand.position.set(150, 0, 0);
+ 
+  avatar.add(left_hand);
+  
+  var foot = new THREE.SphereGeometry(50);
+ 
+  var right_foot = new THREE.Mesh(foot, cover);
+ 
+  right_foot.position.set(-75, -125, 0);
+ 
+  avatar.add(right_foot);
+ 
+  var left_foot = new THREE.Mesh(foot, cover);
+ 
+  left_foot.position.set(75, -125, 0);
+ 
+  avatar.add(left_foot);
+  
+  var head = new THREE.SphereGeometry(60);
+  
+  var header = new THREE.Mesh(head, cover);
+  
+  header.position.set(0,140,0);
+  
+  avatar.add(header);
+
+  // Now, animate what the camera sees on the screen:
+  //animate the scene instead of showing the scene just one time
+  //use true and false to control whether the avatar animates
+  var is_cartwheeling = true;
+  var is_flipping = false;
+  function animate() {
+ 
+  requestAnimationFrame(animate);
+ 
+  if (is_cartwheeling) { 
+ 
+   avatar.rotation.z = avatar.rotation.z + 0.05;
+ 
+  }
+  
+  else if (is_flipping){
+    
+    avatar.rotation.y = avatar.rotation.y + 0.05;
+    
+  }
+ 
+  renderer.render(scene, camera);
+ 
+  }
+ 
+animate();
+</script>

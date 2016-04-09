@@ -1,0 +1,278 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script>
+  // This is where stuff in our game will happen:
+  var scene = new THREE.Scene();
+
+  // This is what sees the stuff:
+  var aspect_ratio = window.innerWidth / window.innerHeight;
+  var camera = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 10000);
+  camera.position.z = 500;
+  //remove camera here and add it to the avatar so that it follows the avatar
+
+  // This will draw what the camera sees onto the screen:
+  var renderer = new THREE.CanvasRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // ******** START CODING ON THE NEXT LINE ********
+  //create an invisible marker as a reference point for the camera
+  var marker = new THREE.Object3D();
+ 
+  scene.add(marker);
+
+  //making an avatar using shapes 
+ var cover = new THREE.MeshNormalMaterial();
+ 
+  var body = new THREE.SphereGeometry(100);
+ 
+  var avatar = new THREE.Mesh(body, cover);
+ 
+ //add avatar to the fixed marker instead of the scene
+  marker.add(avatar);
+
+  var hand = new THREE.SphereGeometry(50);
+ 
+  var right_hand = new THREE.Mesh(hand, cover);
+ 
+  right_hand.position.set(-150, 0, 0);
+  
+  //group all body parts together and spin the group
+  //use avatar.add instead of scene.add
+ 
+  avatar.add(right_hand);
+  
+  var left_hand = new THREE.Mesh(hand, cover);
+ 
+  left_hand.position.set(150, 0, 0);
+ 
+  avatar.add(left_hand);
+  
+  var foot = new THREE.SphereGeometry(50);
+ 
+  var right_foot = new THREE.Mesh(foot, cover);
+ 
+  right_foot.position.set(-75, -125, 0);
+ 
+  avatar.add(right_foot);
+ 
+  var left_foot = new THREE.Mesh(foot, cover);
+ 
+  left_foot.position.set(75, -125, 0);
+ 
+  avatar.add(left_foot);
+  
+  var head = new THREE.SphereGeometry(60);
+  
+  var header = new THREE.Mesh(head, cover);
+  
+  header.position.set(0,140,0);
+  
+  avatar.add(header);
+  
+  //add the camera here so that it follows the avatar
+  //avatar.add(camera);
+  
+  //add the camera to the invisible marker
+  marker.add(camera);
+  
+  //making trees
+  makeTreeAt( 500, 0);
+ 
+  makeTreeAt(-500, 0);
+ 
+  makeTreeAt( 750, -1000);
+ 
+  makeTreeAt(-750, -1000);
+ 
+
+ 
+  function makeTreeAt(x, z) {
+ 
+   var trunk = new THREE.Mesh(
+ 
+   new THREE.CylinderGeometry(50, 50, 200),
+   
+   //Use 0x instead of # for colour
+   new THREE.MeshBasicMaterial({color: 0xA0522D})
+ 
+  );
+ 
+
+ 
+  var top = new THREE.Mesh(
+ 
+    new THREE.SphereGeometry(150),
+    
+    //Use 0x instead of # for colour
+    new THREE.MeshBasicMaterial({color: 0x228B22})
+ 
+  );
+ 
+  top.position.y = 175;
+ 
+  trunk.add(top);
+ 
+
+ 
+  trunk.position.set(x, -75, z);
+ 
+  scene.add(trunk);
+ 
+  }
+
+  // Now, animate what the camera sees on the screen:
+  //animate the scene instead of showing the scene just one time
+  //use true and false to control whether the avatar animates
+  //create a clock to keep track of how much time has passed
+  var clock = new THREE.Clock(true);
+  function animate() {
+ 
+  requestAnimationFrame(animate);
+  
+  walk();
+  acrobatics();
+ 
+  renderer.render(scene, camera);
+ 
+  }
+ 
+  animate();
+ 
+  var is_cartwheeling = false;
+ 
+  var is_flipping = false;
+ 
+  function acrobatics() {
+ 
+  if (is_cartwheeling) {
+ 
+  avatar.rotation.z = avatar.rotation.z + 0.05;
+ 
+  }
+ 
+  if (is_flipping) {
+ 
+  avatar.rotation.x = avatar.rotation.x + 0.05;
+ 
+  }
+ 
+  }
+  
+  //the back and forth motion of the legs and the hands follow a sinusodial function
+  
+  function walk() {
+    
+  //If the avatar is not running, do not run this function
+    
+  if (!isWalking()) return ;
+ 
+  var position = Math.sin(clock.getElapsedTime()*5) * 50;
+  
+  //alternate left and right leg position. Also alternate left and right hand position
+ 
+  right_hand.position.z = position;
+ 
+  left_hand.position.z = -position;
+ 
+  right_foot.position.z = -position;
+ 
+  left_foot.position.z = position;
+ 
+  }
+  
+  //make walking movements only when arrow keys are pressed
+  
+  var is_moving_right, is_moving_left, is_moving_forward, is_moving_back;
+ 
+  function isWalking() {
+ 
+  if (is_moving_right) return true;
+ 
+  if (is_moving_left) return true;
+ 
+  if (is_moving_forward) return true;
+ 
+  if (is_moving_back) return true;
+ 
+  else return false;
+ 
+  }
+
+// Event listener
+document.addEventListener( 'keydown' , function (event) {
+
+//Display the keycode of a particular key when it is pressed
+//alert(event.keyCode);
+
+//move the avatar when arrow keys are pressed
+//map the arrow keys to the appropriate keycode
+//using marker method, change position of reference market instead of avatar
+//we need to return true for is_moving values to make sure our avatar animates when it is moving
+var code = event.keyCode;
+ 
+ if (code == 37) { 
+ 
+ marker.position.x = marker.position.x-5; 
+ 
+ is_moving_left = true;
+ 
+ }
+ 
+ // left 
+ 
+ if (code == 38) {
+ 
+ marker.position.z = marker.position.z-5; 
+ 
+ is_moving_forward = true;
+ 
+ }
+ 
+ // up 
+ 
+ if (code == 39) {
+ 
+ marker.position.x = marker.position.x+5; 
+ 
+ is_moving_right = true;
+ 
+ }
+ 
+ // right 
+ 
+ if (code == 40) {
+ 
+ marker.position.z = marker.position.z+5; 
+ 
+ is_moving_back = true;
+ 
+ }
+ 
+ // down
+ 
+ //using keys to toggle cartwheeling and flipping
+ //invert boolean logic state
+ if (code == 67) is_cartwheeling = !is_cartwheeling; // C 
+ 
+ if (code == 70) is_flipping = !is_flipping; // F
+ 
+});
+
+//use keyup to stop motion animation when we are no longer moving/pressing arrow keys
+
+document.addEventListener( 'keyup' , function (event) {
+ 
+ var code = event.keyCode;
+ 
+ if (code == 37) is_moving_left = false;
+ 
+ if (code == 38) is_moving_forward = false;
+ 
+ if (code == 39) is_moving_right = false;
+ 
+ if (code == 40) is_moving_back = false;
+ 
+});
+</script>
