@@ -1,0 +1,190 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script>
+  // This is where stuff in our game will happen:
+  var scene = new THREE.Scene();
+
+  // This is what sees the stuff:
+  var aspect_ratio = window.innerWidth / window.innerHeight;
+  //let the camera see far, far away (since we want to see the entire solar system)
+  var above_cam = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 1e6);
+ 
+  above_cam.position.z = 1000;
+ 
+  scene.add(above_cam);
+  
+  //camera to see view of the solar system from Earth
+  var earth_cam = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 1e6);
+ 
+  scene.add(earth_cam);
+  
+  var camera = above_cam;
+
+  // This will draw what the camera sees onto the screen:
+  var renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // ******** START CODING ON THE NEXT LINE ********
+  //make the background black so that it represents outer space
+  document.body.style.backgroundColor = 'black' ;
+  
+  //add the sun to our simulation
+  var surface = new THREE.MeshPhongMaterial({ambient: 0xFFD700});
+ 
+  var star = new THREE.SphereGeometry(50, 28, 21);
+ 
+  var sun = new THREE.Mesh(star, surface);
+ 
+  scene.add(sun);
+ 
+
+ 
+  var ambient = new THREE.AmbientLight(0xffffff);
+ 
+  scene.add(ambient);
+ 
+
+  //add a point light in the middle of the sun. The point light will emit light in all directions from a single point
+  //similar concept to charge on an electron
+  var sunlight = new THREE.PointLight(0xffffff, 5, 1000);
+ 
+  sun.add(sunlight);
+
+  //create planet earth
+  var surface = new THREE.MeshPhongMaterial({ambient: 0x1a1a1a, color: 0x0000cd});
+ 
+  var planet = new THREE.SphereGeometry(20, 20, 15);
+ 
+  var earth = new THREE.Mesh(planet, surface);
+  
+  //make sure that the Earth's orbit is centered on the Sun
+  var earth_orbit = new THREE.Object3D();
+ 
+  sun.add(earth_orbit);
+ 
+  earth_orbit.add(earth);
+  //Earth will orbit the sun 250 units away
+  earth.position.set(0,250,0);
+
+   //create the moon
+  var surface = new THREE.MeshPhongMaterial({ambient: 0x1a1a1a, color: 0xffffff});
+ 
+  var planet = new THREE.SphereGeometry(15, 30, 25);
+ 
+  var moon = new THREE.Mesh(planet, surface);
+  
+  var moon_orbit = new THREE.Object3D();
+  
+  //make sure that the moon's orbit is centered on the Earth
+  earth.add(moon_orbit);
+  
+  moon_orbit.add(moon);
+  //moon will orbit the Earth at 100 units away 
+  moon.position.set(0, 100, 0);
+  
+  //ensure that the Earth's camera is always facing the moon
+  moon_orbit.add(earth_cam);
+ 
+  earth_cam.rotation.set(Math.PI/2, 0, 0);
+ 
+
+  
+  
+  //adding stars
+  //use a particle generator system
+  var stars = new THREE.Geometry();
+ 
+  while (stars.vertices.length < 1e4) {
+ 
+  var lat = Math.PI * Math.random() - Math.PI/2;
+ 
+  var lon = 2*Math.PI * Math.random();
+ 
+
+ 
+  stars.vertices.push( new THREE.Vector3(
+ 
+  1e5 * Math.cos(lon) * Math.cos(lat),
+ 
+  1e5 * Math.sin(lon) * Math.cos(lat),
+ 
+  1e5 * Math.sin(lat)
+ 
+  ));
+ 
+  }
+ 
+  var star_stuff = new THREE.ParticleBasicMaterial({size: 500});
+ 
+  var star_system = new THREE.ParticleSystem(stars, star_stuff);
+ 
+  scene.add(star_system);
+ 
+  var time = 0,
+ 
+  speed = 1,
+ 
+  pause = false;
+  
+  //This is a slower animation, so we can see the phases of the moon clearly
+ 
+  function animate() {
+ 
+  requestAnimationFrame(animate);
+ 
+  renderer.render(scene, camera);
+  
+  //if pause is true, don't run the animation, but continue to render the current scene
+  if (pause) return ;
+ 
+  time = time + speed;
+ 
+  var e_angle = time * 0.0018;
+ 
+  earth_orbit.rotation.set(0,0,e_angle);
+ 
+  var m_angle = time * 0.02;
+ 
+  moon_orbit.rotation.set(0, 0, m_angle);
+ 
+  }
+ 
+
+ 
+animate();
+
+//Change cameras by pressing c or spacebar
+//Pause animation by pressing p
+//Change the speed of the animation by pressing 1,2,3
+document.addEventListener( "keydown" , function (event) {
+ 
+var code = event.keyCode;
+ 
+
+ 
+ if (code == 67) changeCamera(); // C 
+ 
+ if (code == 32) changeCamera(); // space 
+ 
+ if (code == 80) pause = !pause; // P 
+ 
+ if (code == 49) speed = 1; // 1 
+ 
+ if (code == 50) speed = 2; // 2 
+ 
+ if (code == 51) speed = 10; // 3 
+ 
+});
+ 
+
+ 
+ function changeCamera() {
+ 
+ if (camera == above_cam) camera = earth_cam;
+ 
+ else camera = above_cam;
+ 
+}
+</script>
