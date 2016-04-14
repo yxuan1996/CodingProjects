@@ -1,0 +1,306 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src= "http://gamingJS.com/physi.js" > </script>
+<script src= "http://gamingJS.com/Scoreboard.js" > </script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script>
+  //Physics settings
+  Physijs.scripts.ammo = 'http://gamingJS.com/ammo.js' ;
+  //a worker performs physics calculations
+  Physijs.scripts.worker = 'http://gamingJS.com/physijs_worker.js' ;
+  
+  // This is where stuff in our game will happen:
+  //Instead of a THREE scene , we need to use a Physijs scene
+  var scene = new Physijs.Scene({ fixedTimeStep: 2 / 60 });
+  //adding gravity in the negative y direction (downwards)
+  scene.setGravity( new THREE.Vector3( 0, -100, 0 )); 
+ 
+  // This is what sees the stuff: 
+ 
+  var aspect_ratio = window.innerWidth / window.innerHeight;
+ 
+  var camera = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 10000);
+
+  camera.position.z = 200;
+  
+  camera.position.y = 100; 
+ 
+  scene.add(camera);
+
+  // This will draw what the camera sees onto the screen:
+  var renderer = new THREE.WebGLRenderer(); 
+ 
+  renderer.setSize(window.innerWidth, window.innerHeight);
+ 
+  document.body.appendChild(renderer.domElement);
+
+  // ******** START CODING ON THE NEXT LINE ********
+  var ground = addGround(); 
+  function addGround() {
+ 
+  document.body.style.backgroundColor = '#87CEEB' ;
+ 
+  ground = new Physijs.PlaneMesh(
+ 
+  new THREE.PlaneGeometry(1e6, 1e6),
+ 
+  new THREE.MeshBasicMaterial({color: 0x7CFC00})
+ 
+  );
+ 
+  ground.rotation.x = -Math.PI/2;
+ 
+  scene.add(ground);
+ 
+  return ground;
+ 
+  }
+
+ 
+  var avatar = addAvatar();
+  
+  function addAvatar() {
+ 
+  avatar = new Physijs.BoxMesh(
+ 
+  new THREE.CubeGeometry(40, 50, 1),
+ 
+  //Make the box invisible so that we can see the image that loads
+  new THREE.MeshBasicMaterial({visible:false})
+ 
+  );
+  
+  //Create a new type of material: the image material
+  var avatar_material = new THREE.MeshBasicMaterial({ 
+ 
+  map: THREE.ImageUtils.loadTexture( '/images/purple_fruit_monster.png' ),
+ 
+  transparent: true
+ 
+  });
+  
+  
+  //Build a mesh with the image material
+  var avatar_picture = new THREE.Mesh( 
+ 
+  new THREE.PlaneGeometry(40, 50), avatar_material
+ 
+  );
+  
+  //add the image mesh to the avatar
+  avatar.add(avatar_picture);
+  
+  
+ 
+  avatar.position.set(-50, 50, 0);
+ 
+  scene.add(avatar);
+ 
+
+ 
+  avatar.setAngularFactor( new THREE.Vector3( 0, 0, 0 )); // no rotation 
+ 
+  avatar.setLinearFactor( new THREE.Vector3( 1, 1, 0 )); // only move on X/Y axes 
+ 
+  avatar.setLinearVelocity( new THREE.Vector3(0, 150, 0));
+ 
+  avatar.addEventListener( 'collision' , function (object) {
+ 
+ //if the object collides with the fruit, score points
+  if (object.is_fruit) {
+ 
+  scoreboard.addPoints(10);
+ 
+  avatar.setLinearVelocity( new THREE.Vector3(0, 50, 0));
+ 
+  scene.remove(object);
+ 
+  }
+
+  //if the object hits the ground, end the game
+  if (object == ground) {
+ 
+  game_over = true;
+ 
+  scoreboard.message( "Game Over!" );
+ 
+  }
+ 
+  });
+ 
+  return avatar;
+ 
+  }
+ 
+  var scoreboard = addScoreboard();
+  function addScoreboard() {
+ 
+  var scoreboard = new Scoreboard();
+ 
+  scoreboard.score(0);
+ 
+  scoreboard.help( 'Use arrow keys to move and the space bar to jump' );
+ 
+  return scoreboard;
+ 
+  }
+ 
+  animate(); 
+  var game_over = false;
+ 
+  function animate() {
+    
+  //if the game is over, stop all animation
+  if (game_over) return ;
+
+ 
+  requestAnimationFrame(animate);
+ 
+  //important! This line is needed for the Physics to run
+  scene.simulate();  
+ 
+  renderer.render(scene, camera);
+ 
+  }
+ 
+  gameStep();
+  //gamestep will launch fruit every 3 seconds until the end of the game
+  //setTimeout ensures that the function will call itself every 3 seconds
+  function gameStep() {
+ 
+  if (game_over) return ;
+ 
+  launchFruit();
+ 
+  setTimeout(gameStep, 3*1000);
+ 
+  }
+  
+  function launchFruit() {
+    
+  //create the fruit object
+  var fruit = new Physijs.ConvexMesh(
+ 
+  new THREE.CylinderGeometry(20, 20, 1, 24),
+ 
+  new THREE.MeshBasicMaterial({visible:false})
+ 
+  );
+  
+  //create a new type of material: image material for the fruit
+  var material = new THREE.MeshBasicMaterial({ 
+ 
+  map: THREE.ImageUtils.loadTexture( '/images/fruit.png' ),
+ 
+  transparent: true
+  
+  });
+  
+  //build a mesh for the image material
+  var picture = new THREE.Mesh( 
+ 
+  new THREE.PlaneGeometry(40, 40), material
+  
+  );
+  
+  //rotate the image mesh to align with the cylinder
+  picture.rotation.x = -Math.PI/2;
+  
+  //attach the image mesh to the fruit
+  fruit.add(picture);
+
+ 
+  fruit.is_fruit = true;
+ 
+  fruit.setAngularFactor( new THREE.Vector3( 0, 0, 1 ));
+ 
+  fruit.setLinearFactor( new THREE.Vector3( 1, 1, 0 ));
+ 
+  fruit.position.set(300, 20, 0);
+ 
+  fruit.rotation.x = Math.PI/2;
+ 
+  scene.add(fruit);
+  
+  //fruit is dropping down
+  fruit.setLinearVelocity(
+ 
+  new THREE.Vector3(-150, 0, 0)
+ 
+  );
+ 
+  }
+  
+  document.addEventListener( "keydown" , function (event) {
+ 
+  var code = event.keyCode;
+ 
+
+ 
+  if (code == 37) left(); // left arrow 
+ 
+  if (code == 39) right(); // right arrow 
+ 
+  if (code == 38) up(); // up arrow 
+ 
+  if (code == 32) up(); // space bar 
+  
+  if (code == 82) reset(); //reset the game
+ 
+  });
+ 
+
+ 
+  function left() { move(-50, 0); }
+ 
+  function right() { move(50, 0); }
+ 
+  function up() { move(avatar.getLinearVelocity().x, 50); }
+ 
+
+ 
+  function move(x, y) {
+ 
+  avatar.setLinearVelocity(
+ 
+  new THREE.Vector3(x, y, 0)
+ 
+  );
+ 
+  }
+  
+  function reset(){
+    //recentering the avatar to the middle of the page
+    avatar.__dirtyPosition = true;
+    
+    //reset the avatar's position
+    avatar.position.set(-50, 50, 0); 
+    
+    //reset the avatar's speed
+    avatar.setLinearVelocity(new THREE.Vector3(0, 150, 0));
+    
+    //remove all remaining fruits on the gameboard
+    for (var i in scene._objects) { 
+ 
+    if (scene._objects[i].is_fruit) { 
+ 
+    scene.remove(scene._objects[i]); 
+ 
+    } 
+ 
+    }
+    //make the score equal to zero
+    scoreboard.score(0);
+  }
+  
+//Additional Improvements to be considered
+//make the fruit come out randomly
+
+//Make the fruit move faster for higher scores
+
+//Add things that the purple fruit monster doesn’t like to make the score go down when he eats them
+
+//Stop the game if too much fruit gets past the purple fruit monster
+  
+
+</script>

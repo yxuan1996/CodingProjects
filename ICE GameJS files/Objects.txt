@@ -1,0 +1,117 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script>
+  // This is where stuff in our game will happen:
+  var scene = new THREE.Scene();
+
+  // This is what sees the stuff:
+  var aspect_ratio = window.innerWidth / window.innerHeight;
+  var camera = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 10000);
+  camera.position.z = 500;
+  scene.add(camera);
+
+  // This will draw what the camera sees onto the screen:
+  var renderer = new THREE.CanvasRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // ******** START CODING ON THE NEXT LINE ********
+  //Curly Braces can be used to wrap Javascript Objects
+  //Objects can contain different pieces of information known as attributes
+  //In other programming languages, people would call the original object a 'class'
+  //The original object can act as a template for creating similar objects
+  var best_movie = {
+ 
+  title: 'Star Wars' ,
+ 
+  year: 1977,
+ 
+  stars: [ 'Mark Hamill' , 'Harrison Ford' , 'Carrie Fisher' ],
+ 
+  //when a function is used in an object, it is called a method
+  aboutMe: function () {
+ 
+  //The this keyword refers to the current object
+  console.log(this.title + ', starring: ' + this.stars);
+ 
+  }
+ 
+  };
+ 
+  best_movie.aboutMe();
+  //the output in the console will be
+  //Star Wars, starring: Marck Hamill,Harrison Ford,Carrie Fisher
+  
+  //create a new object with the same properties, attributes and methods as the original object
+  var great_movie = Object.create(best_movie);
+ 
+  great_movie.aboutMe();
+ 
+  // => Star Wars, starring: Mark Hamill,Harrison Ford,Carrie Fisher
+ 
+  //Now, we want to update the properties of the new object
+  great_movie.title = 'Toy Story' ;
+ 
+  great_movie.year = 1995;
+ 
+  great_movie.stars = [ 'Tom Hanks' , 'Tim Allen' ];
+ 
+  great_movie.aboutMe();
+ 
+  // => Toy Story, starring: Tom Hanks,Tim Allen
+  
+  //Using a special function to create a new object
+  function Movie(title, stars) {
+ 
+  this.title = title;
+ 
+  this.stars = stars;
+  
+  //the year property will take in the current year
+  this.year = ( new Date()).getFullYear();
+ 
+  }
+  
+  //Creating methods for the special function
+  //We use the 'prototype keyword
+  Movie.prototype.aboutMe = function () {
+ 
+  console.log(this.title + ', starring: ' + this.stars);
+ 
+  };
+
+  //Calling a regular function
+  //Movie();
+  
+  //Calling an object constructor function
+  //We place a new variable before the constructor's name
+  var kung_fu_movie = new Movie( 'Kung Fu Panda' , [ 'Jack Black' , 'Angelina Jolie' ]);
+  
+  console.log(kung_fu_movie.title);
+ 
+  // => Kung Fu Panda 
+ 
+  console.log(kung_fu_movie.stars);
+ 
+  // => ['Jack Black', 'Angelina Jolie'] 
+ 
+  console.log(kung_fu_movie.year);
+ 
+  // => 2013
+  
+  kung_fu_movie.aboutMe();
+ 
+  // => Kung Fu Panda, starring: Jack Black,Angelina Jolie
+  
+  //SphereGeometry , MeshNormalMaterial , and Mesh are all constructor functions in the Three.js library.
+  
+  var shape = new THREE.SphereGeometry(100);
+ 
+  var cover = new THREE.MeshNormalMaterial();
+ 
+  var ball = new THREE.Mesh(shape, cover);
+
+  // Now, show what the camera sees on the screen:
+  renderer.render(scene, camera);
+</script>

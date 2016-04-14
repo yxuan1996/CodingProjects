@@ -1,0 +1,487 @@
+<body></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src="http://gamingJS.com/physi.js"></script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script src= "http://gamingJS.com/Scoreboard.js" > </script> 
+<script src= "http://gamingJS.com/Mouse.js" > </script>
+<script src="http://gamingJS.com/Sounds.js"> </script>
+
+<script>
+  //Mouse.js will add mouse functionality to the game
+  // Physics settings
+  Physijs.scripts.ammo = 'http://gamingJS.com/ammo.js';
+  Physijs.scripts.worker = 'http://gamingJS.com/physijs_worker.js';
+
+  // This is where stuff in our game will happen:
+  var scene = new Physijs.Scene({ fixedTimeStep: 2 / 60 });
+  scene.setGravity(new THREE.Vector3( 0, -100, 0 ));
+
+  // This is what sees the stuff:
+  var width = window.innerWidth,
+      height = window.innerHeight,
+      aspect_ratio = width / height;
+  //var camera = new THREE.PerspectiveCamera(75, aspect_ratio, 1, 10000);
+   var camera = new THREE.OrthographicCamera(
+     -width/2, width/2, height/2, -height/2, 1, 10000
+   );
+
+  camera.position.z = 500;
+  scene.add(camera);
+
+  // This will draw what the camera sees onto the screen:
+  var renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+  //RGB color system
+  //The first 2 numbers represent the intensity of Red
+  //The next 2 numbers represent the intensity of Green
+  //The last 2 numbers represent the intensity of Blue
+  document.body.style.backgroundColor = '#9999aa' ;
+
+  // ******** START CODING ON THE NEXT LINE ********  
+  //making boundaries for our game
+  function makeBorder(x, y, w, h) {
+ 
+  var border = new Physijs.BoxMesh(
+ 
+  new THREE.CubeGeometry(w, h, 100),
+ 
+  Physijs.createMaterial(
+ 
+  new THREE.MeshBasicMaterial({color: 0x000000}), 0.2, 1.0
+ 
+  ),
+ 
+  0
+ 
+  );
+ 
+  border.position.set(x, y, 0);
+ 
+  return border;
+ 
+  }
+  
+  scene.add(makeBorder(width/-2, 0, 50, height));
+ 
+  scene.add(makeBorder(width/2, 0, 50, height));
+ 
+  scene.add(makeBorder(0, height/2, width, 50));
+ 
+  scene.add(makeBorder(0, height/-2, width, 50));
+  
+  //Create the avatar
+  var avatar = new Physijs.ConvexMesh(
+ 
+  new THREE.CylinderGeometry(30, 30, 5, 16),
+
+  Physijs.createMaterial(
+ 
+  //The first 0.2 means that the material is very slippery. 1.0 would be hard to move
+  //The second 0.5 means that the material is somewhat bouncy. 1.0 would be very bouncy
+  new THREE.MeshBasicMaterial({color:0xbb0000}), 0.2, 0.5
+ 
+  )
+ 
+  );
+  
+  //rotate the avatar by 90 degrees so that it's standing up rather than lying flat
+  avatar.rotation.set(Math.PI/2, 0, 0);
+ 
+  avatar.position.set(0.5 * width/-2, -height/2 + 25 + 30, 0);
+ 
+  scene.add(avatar);
+  
+  //Factor means degree of freedom
+  avatar.setAngularFactor( new THREE.Vector3( 0, 0, 0 )); // don't rotate 
+ 
+  avatar.setLinearFactor( new THREE.Vector3( 1, 1, 0 )); // only move on X and Y axis
+  
+  avatar.addEventListener( 'collision' , function (object) {
+    
+  //adding sounds to the game  
+  if (object.isGoal) Sounds.guitar.play();
+ 
+  else Sounds.click.play();
+
+  //do nothing if object collides with something that is not a goal (aka obstacle)
+  if (!object.isGoal) return ;
+ 
+  //check if there are any more levels remaining
+  if (!levels.hasMoreLevels()) return gameOver();
+ 
+  moveGoal();
+ 
+  levels.levelUp();
+ 
+  });
+  
+  //move the position of the goal after a 2 second delay (player advances to the next level)
+  function moveGoal() {
+ 
+  scene.remove(goal);
+ 
+  setTimeout(placeGoal, 2*1000);
+ 
+  }
+  
+  document.addEventListener( "keydown" , function (event) {
+ 
+  var code = event.keyCode;
+ 
+  if (code == 37) move(-50); // left arrow 
+ 
+  if (code == 39) move(50); // right arrow 
+ 
+  });
+  
+  function move(x) {
+  //determine how fast the avatar is actually moving
+  var v_y = avatar.getLinearVelocity().y,
+ 
+  v_x = avatar.getLinearVelocity().x;
+ 
+
+  //set the speed limit to be 200
+  //the function will exit if the absolute value of the velocity in either direction is more than 200
+  if (Math.abs(v_x + x) > 200) return ;
+  
+  //otherwise, increase the velocity
+  avatar.setLinearVelocity(
+ 
+  new THREE.Vector3(v_x + x, v_y, 0)
+ 
+  );
+ 
+  }
+  
+  //create a green donut as a goal
+  var goal = new Physijs.ConvexMesh(
+ 
+  new THREE.TorusGeometry(100, 25, 20, 30),
+ 
+  Physijs.createMaterial(
+ 
+  new THREE.MeshBasicMaterial({color:0x00bb00})
+ 
+  ),
+ 
+  0
+ 
+  );
+ 
+  goal.isGoal = true;
+  
+  //place the goal at random locations
+  function placeGoal() {
+  // goal in middle
+  var x = 0,
+ 
+  rand = Math.random();
+  //goal in top left corner
+  if (rand < 0.33) x = width / -2;
+  //goal in top right corner
+  if (rand > 0.66) x = width / 2;
+ 
+  goal.position.set(x, height/2, 0);
+ 
+  scene.add(goal);
+ 
+  }
+ 
+  placeGoal();
+  
+  //function to construct ramps
+  function Ramp(x, y) {
+ 
+  this.mesh = new Physijs.ConvexMesh(
+ 
+  new THREE.CylinderGeometry(5, height * 0.05, height * 0.25),
+ 
+  Physijs.createMaterial(
+ 
+  new THREE.MeshBasicMaterial({color:0x0000cc}), 0.2, 1.0
+ 
+  ),
+ 
+  0
+ 
+  );
+ 
+
+  //move the ramp to a specific position
+  this.move(x, y);
+ 
+  this.rotate(2*Math.PI*Math.random());
+ 
+  this.listenForEvents();
+ 
+  }
+  
+  Ramp.prototype.move = function (x, y) {
+ 
+  this.mesh.position.x = this.mesh.position.x + x;
+ 
+  this.mesh.position.y = this.mesh.position.y + y;
+ 
+  this.mesh.__dirtyRotation = true;
+ 
+  this.mesh.__dirtyPosition = true;
+ 
+  };
+ 
+  Ramp.prototype.rotate = function (angle) {
+ 
+  this.mesh.rotation.z = this.mesh.rotation.z + angle;
+ 
+  this.mesh.__dirtyRotation = true;
+ 
+  this.mesh.__dirtyPosition = true;
+ 
+  };
+  
+  Ramp.prototype.listenForEvents = function () {
+  
+  //assigning variables to this particular thingy
+  var me = this,
+ 
+  mesh = this.mesh;
+  
+  //listen to drag events
+  //occurs when the player clicks and drags the ramp
+  mesh.addEventListener( 'drag' , function (event) {
+ 
+  me.move(event.x_diff, event.y_diff);
+ 
+  });
+ 
+
+  //rotate the ramp if the player clicks on the plane (making it active) and presses the s key. 
+  document.addEventListener( 'keydown' , function (event) {
+ 
+  if (!mesh.isActive) return ;
+ 
+  if (event.keyCode != 83) return ; // S 
+ 
+  me.rotate(0.1);
+ 
+  });
+ 
+  };
+  
+  var ramp1 = new Ramp(-width/4, height/4);
+ 
+  scene.add(ramp1.mesh);
+ 
+  var ramp2 = new Ramp(width/4, -height/4);
+ 
+  scene.add(ramp2.mesh);
+  
+  var scoreboard = new Scoreboard();
+ 
+  scoreboard.timer();
+ 
+  scoreboard.countdown(40);
+ 
+  scoreboard.help(
+ 
+   "Get the green ring. " +
+ 
+   "Click and drag blue ramps. " +
+ 
+   "Click blue ramps and press S to spin. " +
+ 
+   "Left and right arrows to move player. " +
+ 
+   "Be quick!" 
+ 
+  );
+ 
+  scoreboard.onTimeExpired( function () {
+ 
+  scoreboard.setMessage( "Game Over!" );
+ 
+  gameOver();
+ 
+  });
+  
+  var pause = false;
+ 
+  //Gameover function. If there is still time remaining, then the player has won the game. 
+  function gameOver() {
+ 
+  if (scoreboard.getTimeRemaining() > 0) scoreboard.setMessage( 'Win!' );
+ 
+  scoreboard.stopCountdown();
+ 
+  scoreboard.stopTimer();
+ 
+  pause = true;
+ 
+  }
+  
+  function Levels(scoreboard, scene) {
+ 
+  this.scoreboard = scoreboard;
+ 
+  this.scene = scene;
+ 
+  this.levels = [];
+ 
+  this.current_level = 0;
+ 
+  }
+  
+  //Method to add a list of things for that particular level to that level
+  Levels.prototype.addLevel = function (things_on_this_level) {
+ 
+  this.levels.push(things_on_this_level);
+ 
+  };
+  
+  //Get a list of things in the current level
+  Levels.prototype.thingsOnCurrentLevel = function () {
+ 
+  return this.levels[this.current_level];
+ 
+  };
+  
+  //Draw the current level on the scene
+  Levels.prototype.draw = function () {
+ 
+  var scene = this.scene;
+  
+  //for the each of the items in the list of things in the current level, draw it on the screen
+  this.thingsOnCurrentLevel().forEach( function (thing) {
+ 
+  scene.add(thing);
+ 
+  });
+ 
+  };
+  
+  //Method of erasing the things on the current scene
+  Levels.prototype.erase = function () {
+ 
+  var scene = this.scene;
+ 
+  this.thingsOnCurrentLevel().forEach( function (obstacle) {
+ 
+  scene.remove(obstacle);
+ 
+  });
+ 
+  };
+  
+  //Level up!
+  Levels.prototype.levelUp = function () {
+ 
+  if (!this.hasMoreLevels()) return ;
+ 
+  this.erase();
+ 
+  this.current_level++;
+ 
+  this.draw();
+ 
+  //the countdown timer will reset with less time
+  this.scoreboard.resetCountdown(50 - this.current_level * 5);
+ 
+  };
+  
+  //check if there are more levels in the game
+  Levels.prototype.hasMoreLevels = function () {
+ 
+  var last_level = this.levels.length-1;
+ 
+  return this.current_level < last_level;
+ 
+  };
+  
+  function buildObstacle(shape_name, x, y) {
+ 
+  var shape;
+  
+  //build a platform obstacle
+  if (shape_name == 'platform' ) {
+ 
+  shape = new THREE.CubeGeometry(height/2, height/10, 10);
+ 
+  //build a stalactite obstacle
+  //Stala c tites are on the c eiling. Stala g mites are on the g round. Stalac tites hang on tight to the ceiling. Stalag mites start on the ground and might reach the ceiling.
+  } else {
+ 
+  shape = new THREE.CylinderGeometry(50, 2, height);
+ 
+  }
+ 
+  var material = Physijs.createMaterial(
+ 
+  new THREE.MeshBasicMaterial({color:0x333333}), 0.2, 1.0
+ 
+  );
+ 
+
+ 
+  var obstacle = new Physijs.ConvexMesh(shape, material, 0);
+ 
+  obstacle.position.set(x, y, 0);
+ 
+  return obstacle;
+ 
+  }
+  
+  var levels = new Levels(scoreboard, scene);
+  
+  //first level has nothing
+  levels.addLevel([]);
+ 
+  //second level has a platform obstacle
+  levels.addLevel([
+ 
+  buildObstacle( 'platform' , 0, 0.5 * height/2 * Math.random())
+ 
+  ]);
+  
+  //Third level
+  levels.addLevel([
+ 
+  buildObstacle( 'platform' , 0, 0.5 * height/2 * Math.random()),
+ 
+  buildObstacle( 'platform' , 0, -0.5 * height/2 * Math.random())
+ 
+  ]);
+ 
+  //Fourth level
+  levels.addLevel([
+ 
+  buildObstacle( 'platform' , 0, 0.5 * height/2 * Math.random()),
+ 
+  buildObstacle( 'platform' , 0, -0.5 * height/2 * Math.random()),
+ 
+  buildObstacle( 'stalactite' , -0.33 * width, height/2),
+ 
+  buildObstacle( 'stalactite' , 0.33 * width, height/2)
+ 
+  ]);
+
+
+  // Animate motion in the game
+  function animate() {
+    //stop the animation if pause is true
+    if (pause) return ;
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Run physics
+  function gameStep() {
+    //stop the game if pause is true
+    if (pause) return ;
+    scene.simulate();
+    // Update physics 60 times a second so that motion is smooth
+    setTimeout(gameStep, 1000/60);
+  }
+  gameStep();
+</script>
